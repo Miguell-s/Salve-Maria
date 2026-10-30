@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   TOKENS SEMÂNTICOS — fonte única de cores do site (loja + painel).
+   Valores em "R G B" para permitir opacidade (bg-brand/20).
+   Para trocar uma cor do site inteiro, altere apenas aqui (ou pelo painel
+   Admin > Aparência, que injeta overrides validados por contraste).
+   ========================================================================== */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: 255 255 255;
+  --bg-secondary: 243 246 250;
+  --surface-card: 255 255 255;
+  --text-primary: 15 42 82;
+  --text-secondary: 71 85 105;
+  --brand-primary: 85 185 245;   /* #55B9F5 */
+  --brand-secondary: 128 206 255; /* #80CEFF */
+  --brand-deep: 23 105 194;       /* #1769C2 */
+  --accent-purple: 146 112 232;   /* #9270E8 */
+  --accent-pink: 255 112 182;     /* #FF70B6 */
+  --accent-yellow: 255 201 67;    /* #FFC943 */
+  --border-default: 220 229 240;
+  --text-on-accent: 15 42 82;
+  --danger: 200 40 70;
+  --success: 22 130 80;
+  --shadow-default: 0 8px 24px -10px rgb(23 105 194 / 0.22);
+  --shadow-pop: 0 18px 40px -14px rgb(23 105 194 / 0.35);
+  --sky-wash: 233 246 255;
+  /* Roxo "profundo": mesmo matiz da marca, usado em botões/rótulos com texto (contraste >= 4.5:1) */
+  --accent-purple-strong: 107 75 208;  /* #6B4BD0 */
+  --text-on-purple: 255 255 255;
+  --hero-from: 23 105 194;
+  --hero-to: 107 75 208;
+  --title-stroke: 23 105 194;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: 16 24 39;         /* #101827 */
+  --bg-secondary: 23 36 56;       /* #172438 */
+  --surface-card: 30 45 67;       /* #1E2D43 */
+  --text-primary: 248 250 255;    /* #F8FAFF */
+  --text-secondary: 184 197 216;  /* #B8C5D8 */
+  --brand-primary: 85 185 245;
+  --brand-secondary: 128 206 255;
+  --brand-deep: 128 206 255;      /* em fundo escuro, "azul profundo" vira azul claro legível */
+  --accent-purple: 170 145 255;   /* #AA91FF */
+  --accent-pink: 255 131 192;     /* #FF83C0 */
+  --accent-yellow: 255 209 102;   /* #FFD166 */
+  --border-default: 52 68 93;     /* #34445D */
+  --text-on-accent: 15 28 52;
+  --danger: 255 128 148;
+  --success: 110 220 160;
+  --shadow-default: 0 8px 24px -10px rgb(0 0 0 / 0.55);
+  --shadow-pop: 0 18px 40px -14px rgb(0 0 0 / 0.7);
+  --sky-wash: 23 36 56;
+  --accent-purple-strong: 170 145 255;
+  --text-on-purple: 15 28 52;
+  --hero-from: 36 78 140;
+  --hero-to: 91 63 170;
+  --title-stroke: 16 24 39;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+  body {
+    @apply bg-bg font-sans text-fg antialiased;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  h1, h2, h3, h4 { @apply font-display font-extrabold tracking-tight text-fg; }
+  a { @apply transition-colors; }
+  :focus-visible { outline: 3px solid rgb(var(--brand-primary)); outline-offset: 2px; border-radius: 8px; }
+  ::selection { background: rgb(var(--accent-pink) / .35); }
+  /* Fotos de terços nunca recebem filtro de tema */
+  img.photo { filter: none !important; }
+}
+
+@layer components {
+  .container-x { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .card {
+    @apply rounded-xl2 border border-line bg-card shadow-soft;
+    transition: background-color .35s ease, border-color .35s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .card-hover:hover { @apply -translate-y-1 shadow-pop; }
+
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-6 py-2.5
+           font-display text-[0.95rem] font-extrabold uppercase tracking-wide text-onaccent
+           transition-all duration-200 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply bg-brand shadow-soft hover:brightness-105 hover:shadow-pop; }
+  .btn-yellow { @apply bg-yellow shadow-soft hover:brightness-105 hover:shadow-pop; }
+  .btn-pink { @apply bg-pink shadow-soft hover:brightness-105 hover:shadow-pop; }
+  .btn-purple { @apply bg-purple2 text-onpurple shadow-soft hover:brightness-105 hover:shadow-pop; }
+  .btn-ghost { @apply border-2 border-line bg-card text-fg hover:border-brand; }
+  .btn-sm { @apply min-h-[36px] px-4 py-1.5 text-xs; }
+
+  .input {
+    @apply w-full rounded-2xl border-2 border-line bg-bg px-4 py-3 text-fg placeholder:text-fg-2/70
+           focus:border-brand focus:outline-none;
+  }
+  .label { @apply mb-1 block text-sm font-bold text-fg; }
+  .chip { @apply inline-flex items-center rounded-full bg-bg-2 px-3 py-1 text-xs font-bold text-fg-2; }
+  .section-title { @apply text-3xl sm:text-4xl; }
+  .gradient-text {
+    background: linear-gradient(90deg, rgb(var(--brand-primary)), rgb(var(--accent-purple)), rgb(var(--accent-pink)));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .gradient-bg {
+    background: linear-gradient(135deg, rgb(var(--brand-primary) / .9), rgb(var(--accent-purple) / .9) 55%, rgb(var(--accent-pink) / .9));
+  }
+  /* Fundo forte para texto branco/claro (títulos sobre gradiente) */
+  .gradient-hero {
+    background: linear-gradient(135deg, rgb(var(--hero-from)), rgb(var(--hero-to)));
+  }
+  /* Palavra amarela do título (como "MARIA" na logo): contorno garante leitura no fundo claro */
+  .title-outline { -webkit-text-stroke: 5px rgb(var(--title-stroke)); paint-order: stroke fill; }
+  .sky-bg { background: linear-gradient(180deg, rgb(var(--sky-wash)), rgb(var(--bg-primary))); }
+  .skeleton { @apply animate-pulse rounded-xl bg-bg-2; }
+  .spinner { @apply inline-block h-5 w-5 animate-spinner rounded-full border-[3px] border-line border-t-brand; }
+  .table-x { @apply w-full text-left text-sm; }
+  .table-x th { @apply border-b border-line px-3 py-2 font-bold text-fg-2; }
+  .table-x td { @apply border-b border-line/60 px-3 py-2 align-middle; }
+}
+
+/* Transição suave entre temas (a classe é aplicada só durante a troca) */
+html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after {
+  transition: background-color .35s ease, border-color .35s ease, color .35s ease, fill .35s ease !important;
+}
+
+/* Movimento reduzido: desliga decorações animadas e rolagem suave */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum MaterialKind {
+  BEAD
+  SPACER
+  CROSS
+  MEDAL
+  CHARM
+  PACKAGING
+  FINISH
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum OrderStatus {
+  NEW
+  AWAITING_PAYMENT
+  PAID
+  IN_PRODUCTION
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum ItemType {
+  READY
+  CUSTOM
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  phone          String?
+  passwordHash   String?
+  role           Role      @default(CUSTOMER)
+  totpSecret     String?
+  totpEnabled    Boolean   @default(false)
+  otpCode        String?
+  otpExpiresAt   DateTime?
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
+  lgpdConsentAt  DateTime?
+  createdAt      DateTime  @default(now())
+  orders         Order[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  sortOrder   Int       @default(0)
+  active      Boolean   @default(true)
+  products    Product[]
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  sku             String        @unique
+  slug            String        @unique
+  name            String
+  description     String        @default("")
+  priceCents      Int
+  salePriceCents  Int?
+  images          String        @default("[]")
+  categoryId      String?
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  materials       String?
+  dimensions      String?
+  weightGrams     Int?
+  stock           Int           @default(0)
+  reserved        Int           @default(0)
+  lowStockAt      Int           @default(3)
+  status          ProductStatus @default(ACTIVE)
+  featured        Boolean       @default(false)
+  isNew           Boolean       @default(false)
+  soldCount       Int           @default(0)
+  isDemo          Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  orderItems      OrderItem[]
+
+  @@index([status, featured])
+}
+
+model Material {
+  id             String       @id @default(cuid())
+  kind           MaterialKind
+  sku            String       @unique
+  name           String
+  color          String       @default("")
+  colorHex       String       @default("#FFFFFF")
+  sizeMm         Float?
+  materialType   String       @default("")
+  unitPriceCents Int
+  stock          Int          @default(0)
+  reserved       Int          @default(0)
+  lowStockAt     Int          @default(30)
+  images         String       @default("[]")
+  modelUrl       String?
+  active         Boolean      @default(true)
+  sortOrder      Int          @default(0)
+  isDemo         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([kind, active])
+}
+
+model RosaryTemplate {
+  id           String  @id @default(cuid())
+  name         String
+  description  String  @default("")
+  beadsMain    Int     @default(53)
+  beadsExtra   Int     @default(6)
+  spacers      Int     @default(5)
+  crosses      Int     @default(1)
+  medals       Int     @default(1)
+  assemblyCents Int    @default(1500)
+  active       Boolean @default(true)
+  isDefault    Boolean @default(false)
+  sortOrder    Int     @default(0)
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  percentOff  Int?
+  centsOff    Int?
+  active      Boolean   @default(true)
+  expiresAt   DateTime?
+  minCents    Int       @default(0)
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  number          Int           @unique
+  accessToken     String        @unique
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email           String
+  name            String
+  phone           String
+  address         Json
+  status          OrderStatus   @default(AWAITING_PAYMENT)
+  subtotalCents   Int
+  shippingCents   Int
+  discountCents   Int           @default(0)
+  totalCents      Int
+  couponCode      String?
+  paymentId       String?
+  paymentStatus   String?
+  needsAttention  Boolean       @default(false)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  items           OrderItem[]
+  reservations    StockReservation[]
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type           ItemType
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name           String
+  image          String?
+  unitPriceCents Int
+  qty            Int
+  // CUSTOM: configuração escolhida + linhas de materiais (snapshot no momento da compra)
+  config         Json?
+  materialLines  Json?
+}
+
+model StockReservation {
+  id          String            @id @default(cuid())
+  orderId     String
+  order       Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  targetTable String
+  targetId    String
+  qty         Int
+  status      ReservationStatus @default(ACTIVE)
+  expiresAt   DateTime
+  createdAt   DateTime          @default(now())
+
+  @@index([status, expiresAt])
+}
+
+model StockMovement {
+  id          String   @id @default(cuid())
+  targetTable String
+  targetId    String
+  delta       Int
+  reason      String
+  orderId     String?
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([targetTable, targetId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  data      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AutomationLog {
+  id        String   @id @default(cuid())
+  kind      String
+  channel   String
+  target    String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SiteSetting {
+  key   String @id
+  value Json
+}
+
+model Testimonial {
+  id        String  @id @default(cuid())
+  author    String
+  city      String  @default("")
+  text      String
+  rating    Int     @default(5)
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model Banner {
+  id        String  @id @default(cuid())
+  title     String
+  subtitle  String  @default("")
+  imageUrl  String
+  linkUrl   String  @default("")
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model CartSnapshot {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  items          Json
+  reminderSentAt DateTime?
+  updatedAt      DateTime  @updatedAt
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
